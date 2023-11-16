@@ -221,7 +221,8 @@ int main(int argc, char **argv)
 
    }
 
-   if(!strstr(filnam, "http://")){
+   if(!strstr(filnam, "http://") && !strstr(filnam, "https://")){
+   
 
       if(!fexist(filnam, "r")){
 

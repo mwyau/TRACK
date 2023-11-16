@@ -19,7 +19,10 @@ long int new_time(long int tim, int tstep)
 
     year = (int)(tim / 1000000);
 
-    if(!DAYTYP) days[1] = (year % 4) ? 28 : 29;
+    if(!DAYTYP) {
+      days[1] = (year % 4) ? 28 : 29;
+      if(year == 1900 || year == 2100) days[1] = 28;
+    }
 
     ntim += tstep;
 

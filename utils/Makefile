@@ -2,7 +2,7 @@
 
 WORKING_JAVA := $(shell which javac)
 
-all: symlinks bfilt combine convolve count diffstat ensemble hart java ibtref landfall lifecycle mident sample split tc tele_weights tilt transadd trtrans tr2kml tr2nc tr2pgsl runs
+all: symlinks bfilt combine convolve count diffstat ensemble hart helicity java ibtref landfall lifecycle mident sample split tc tele_weights tilt transadd trtrans tr2kml tr2nc tr2pgsl runs trackadd
 
 symlinks: FORCE
 	test -d bin || mkdir bin
@@ -27,6 +27,9 @@ ensemble: FORCE
 	
 hart: FORCE
 	cd HART; make SYSTEM='${SYSTEM}' AD_C_FLAGS='$(AD_C_FLAGS)'
+
+helicity: FORCE
+	cd HELICITY; make SYSTEM='${SYSTEM}' AD_C_FLAGS='$(AD_C_FLAGS)'
 	
 ibtref: FORCE
 	cd IBT-REF; make SYSTEM='${SYSTEM}' AD_C_FLAGS='$(AD_C_FLAGS)'
@@ -75,6 +78,9 @@ tr2pgsl: FORCE
 	
 runs: FORCE
 	cd SIEGEL; make SYSTEM='${SYSTEM}' AD_C_FLAGS='$(AD_C_FLAGS)'
+
+trackadd: FORCE
+	cd TRACKADD; make SYSTEM='${SYSTEM}' AD_C_FLAGS='$(AD_C_FLAGS)'
 	
 java: FORCE
 ifdef WORKING_JAVA

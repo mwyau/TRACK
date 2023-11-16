@@ -319,7 +319,8 @@ NETCDF_INFO *netcdf_info(GRID *gr, int *frnum, char *filnam, int *tl, int *gof)
             scanf("%s", ffield->name);
             fprintf(finit, "%s\n", ffield->name);
           }
-          nc_inq_varid(ffield->ncid, ffield->name, &(ffield->ifield));
+          if((ierr = nc_inq_varid(ffield->ncid, ffield->name, &(ffield->ifield))) != NC_NOERR)
+             handle_error(ierr, __FILE__, __LINE__);  
        }
     }
 
@@ -852,7 +853,7 @@ NETCDF_INFO *netcdf_info(GRID *gr, int *frnum, char *filnam, int *tl, int *gof)
 
     if(ffield->ioff){
        printf("****INFORMATION****, data has an offset factor ,     \r\n"
-              "                     scaling factor is %e.           \n\n", ffield->fld_offset);
+              "                     offset factor is %e.            \n\n", ffield->fld_offset);
     }
 
 /* assign memory for reading field data */

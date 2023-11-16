@@ -73,7 +73,7 @@ double eval_linear_stat(double *plt, double **den, struct dpt *st, struct dpt *d
 
          cn *= tsm;
 
-         cd = 1.0 - tsm;
+         cd = tsm - 1.0;
 
          con = cn / (cd * cd);
 
@@ -177,7 +177,7 @@ double eval_linear_stat(double *plt, double **den, struct dpt *st, struct dpt *d
 
                tsm = (1.0 + ts) / ts;
 
-               cd = 1.0 - tsm;
+               cd = tsm - 1.0;
 
                cnn = tsm / (cd * cd);
 
@@ -268,7 +268,7 @@ double variance_linear(double mean, struct dpt *spt, struct dpt *dt, double *plt
 
          cn *= tsm;
 
-         cd = 1.0 - tsm;
+         cd = tsm - 1.0;
 
          con = cn / (cd * cd);
 
@@ -308,7 +308,7 @@ double variance_linear(double mean, struct dpt *spt, struct dpt *dt, double *plt
 
             tsm = (1.0 + ts) / ts;
 
-            cd = 1.0 - tsm;
+            cd = tsm - 1.0;
 
             cnn = tsm / (cd * cd);
 

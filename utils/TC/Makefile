@@ -18,11 +18,11 @@ LIBS = -lm ${ADLIBS}
 
 .KEEP_STATE:
 
-all: tcident tcident_flux combine_reg reg_diff write_fields diffke median reg_maxmin rad_dist
+all: tcident combine_reg reg_diff write_fields diffke median reg_maxmin rad_dist diffvec
 
-tcident: tc_identify.c $(OBJECTS)
-	$(CC) $(CFLAGS) -c tc_identify.c
-	$(CC) $(CFLAGS) -o ../bin/$@ tc_identify.o $(OBJECTS) $(LIBS)
+tcident: tc_identify.c dirangle_shear.c $(OBJECTS)
+	$(CC) $(CFLAGS) -c tc_identify.c dirangle_shear.c dir_rot.c shear_rot.c bicubic_intrp.c
+	$(CC) $(CFLAGS) -o ../bin/$@ tc_identify.o dirangle_shear.o dir_rot.o shear_rot.o bicubic_intrp.o $(OBJECTS) $(LIBS)
 
 tcident_flux: tc_identify_flux.c $(OBJECTS)
 	$(CC) $(CFLAGS) -c tc_identify_flux.c
@@ -49,3 +49,6 @@ reg_maxmin: reg_maxmin.c realloc_n.c
 rad_dist: radial_dist.c realloc_n.c
 	$(CC) $(CFLAGS) -o ../bin/$@ radial_dist.c realloc_n.c read_tracks.o meantrd.o $(LIBS)
 
+diffvec: diff-shear.c realloc_n.c dirangle_shear.c read_tracks.c convert_track.c meantrd.c
+	${CC} ${CFLAGS} -c diff-shear.c realloc_n.c dirangle_shear.c read_tracks.c convert_track.c meantrd.c
+	$(CC) $(CFLAGS) -o ../bin/$@ diff-shear.o realloc_n.o dirangle_shear.o read_tracks.o convert_track.o meantrd.o $(LIBS)

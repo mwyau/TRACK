@@ -50,6 +50,8 @@ void main(int argc, char *argv[])
     int level_dim;
     int time_dim;
 
+    int old_fill_mode=0;
+
     int var_dims[RANK_var];
     int lat_dims[RANK_lat];
     int lon_dims[RANK_lon];
@@ -190,6 +192,9 @@ printf("%ld\n", time[i]);
     /* enter define mode */
 /*    stat = nc_create(outfil, NC_CLOBBER | NC_64BIT_OFFSET, &ncid); */
     stat = nc_create(outfil, NC_CLOBBER, &ncid);
+    check_err(stat,__LINE__,__FILE__);
+
+    stat = nc_set_fill(ncid, NC_NOFILL, &old_fill_mode);
     check_err(stat,__LINE__,__FILE__);
 
     /* define dimensions */

@@ -323,7 +323,7 @@ void track_sample_dev(struct tot_tr* trs, int trnum)
 
 
    close_file(fdev, "dev.dat");
-   close_file(fdist, "dev.dat");
+   close_file(fdist, "dist.dat");
 
    if(wrttr){
       fout = open_file(trout, "w");

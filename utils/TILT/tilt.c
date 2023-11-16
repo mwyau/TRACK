@@ -7,7 +7,7 @@
 #include "m_values.h"
 #include "vec.h"
 
-#define  NBIN     201
+#define  NBIN     401
 #define  PLARGE   1.0e+10
 #define  NLARGE  -1.0e+10
 
@@ -16,7 +16,7 @@
 
 struct tot_tr *read_tracks(FILE * , int * , int * , int * , int , float * , float * , float ** , int *);
 double fvec(VEC * , VEC * , VEC * , VEC * );
-void centre( struct tot_tr * , int , int , int );
+void centre( struct tot_tr * , int , int , int , int );
 void sincos(double , double * , double * );
 
 extern int aniso;
@@ -41,6 +41,7 @@ int main(void)
     int iavg=0, iref=0;
     int ifint=0, ifft=0;
     int lfnd=0;
+    int ityp=0;
 
     int icent=NBIN/2;
     int **ntlt=NULL;
@@ -157,12 +158,15 @@ int main(void)
     scanf("\n");
     wnc = getchar();
 
-    printf("Do you want to average the tilts, centered on the maximum or minimum intensity? 'y' or 'n'\n\n");
+    printf("Do you want to average the tilts, centered on the maximum or minimum intensity or tendency? 'y' or 'n'\n\n");
     scanf("\n");
     if(getchar() == 'y'){
        iavg = 1;
-       printf("Center tracks wrt '0' max. intensity     \r\n"
-              "                  '1' min. intensity     \n\n");
+       printf("Use intensity or tendency, input 0 or 1\n\n");
+       scanf("%d", &ityp);
+
+       printf("Center tracks wrt '0' max. intensity or tendency \r\n"
+              "                  '1' min. intensity or tendency \n\n");
        scanf("%d", &iref);
        printf("Which of the additional fields do you want to use for intensity, input '0' for default?\n\n");
        scanf("%d", &ifint);
@@ -240,7 +244,7 @@ int main(void)
 
        printf("Processing track %d\n", i+1);
 
-       if(iavg) centre(altr, iref, ifint, ifft);
+       if(iavg) centre(altr, ityp, iref, ifint, ifft);
 
        fprintf(fout, "TRACK_NO %d NUMPT %d\n", i+1, altr->num);
 
@@ -405,6 +409,7 @@ int main(void)
                     nloc[icent + atr->fr_id] += 1;
                     lfnd = 1;
                  }
+
                  tavg[k][icent + atr->fr_id] += arcl - loct;
                  ntlt[k][icent + atr->fr_id] += 1;
 
@@ -516,13 +521,14 @@ double fvec(VEC *a, VEC *b, VEC *c, VEC *r)
 }
 
 
-void centre(struct tot_tr *trr, int iref, int ifr, int iffr)
+void centre(struct tot_tr *trr, int ityp, int iref, int ifr, int iffr)
 {
     int i;
     int ipref=0;
     int frid=0;
 
-    float ref, str;
+    float ref=0.0, str=0.0, str2=0.0;
+    float tend=0.0;
 
     struct fet_pt_tr *fp=NULL;
 
@@ -531,18 +537,42 @@ void centre(struct tot_tr *trr, int iref, int ifr, int iffr)
 
 
 /* find reference point */
+
+    if(!ityp){
     
-    for(i=0; i < trr->num; i++){
-       fp = trr->trpt + i;
-       str = (ifr) ? fp->add_fld[iffr] : fp->zf;
+       for(i=0; i < trr->num; i++){
+          fp = trr->trpt + i;
+          str = (ifr) ? fp->add_fld[iffr] : fp->zf;
+          if(str > ADD_CHECK) continue;
 
-       if(!iref){
-          if(str > ref) {ref = str; ipref = i;}
-       }
-       else{
-          if(str < ref) {ref = str; ipref = i;}
-       }
+          if(!iref){
+             if(str > ref) {ref = str; ipref = i;}
+          }
+          else{
+             if(str < ref) {ref = str; ipref = i;}
+          }
 
+       }
+    }
+    else if(ityp == 1) {
+       for(i=0; i < trr->num - 1; i++){
+          fp = trr->trpt + i;
+          str = (ifr) ? fp->add_fld[iffr] : fp->zf;
+          if(str > ADD_CHECK) continue;
+          str2 = (ifr) ? (fp + 1)->add_fld[iffr] : (fp + 1)->zf;
+          if(str2 > ADD_CHECK) continue;     
+          tend = str2 - str;
+          if(!iref){
+             if(tend > ref) {ref = tend; ipref = i;}
+          }
+          else{
+             if(tend < ref) {ref = tend; ipref = i;}
+          }
+       }
+    }
+    else {
+       printf("***ERROR***, centering type not known, %d\n", ityp);
+       exit(1);
     }
 
     frid = (trr->trpt + ipref)->fr_id;

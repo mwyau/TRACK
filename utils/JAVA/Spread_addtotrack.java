@@ -24,8 +24,8 @@ public class Spread_addtotrack{
 		
 		boolean flag;
 		
-	        if(args.length != 5) {
-                  System.err.println("Usage: Spread_addtotrack [path to dirs] [longitude id] [latitude id] [intensity id] [Match dir]");
+	        if(args.length != 6) {
+                  System.err.println("Usage: Spread_addtotrack [path to dirs] [longitude id] [latitude id] [intensity id] [Match dir] [ENSDIFF dir]");
                   System.exit(1);
                 }
 		
@@ -34,6 +34,7 @@ public class Spread_addtotrack{
 		int ifd = Integer.parseInt(args[3]);
 
                 String matchd = args[4];
+                String ensddr = args[5];
 
                 File[] forDates = (new File(args[0])).listFiles();
 		Arrays.sort(forDates);
@@ -111,7 +112,7 @@ public class Spread_addtotrack{
                                     Track mean = TrackOperations.File2Track(meanfile,0, ilong, ilat, ifd);//mean track
 
                                     for(int l=0; l<mean.getPointNo(); l++){
-                                       if(mean.getPoint(l).getIntensity() > 100){
+                                       if(mean.getPoint(l).getIntensity() > 100 && mean.getPoint(l).getIntensity() < Constants.ADD_CHECK){
                                           System.out.println(meanfile.toString());
                                        }
 
@@ -142,9 +143,9 @@ public class Spread_addtotrack{
 				       System.exit(1);
 				    }
 
-                                    BufferedWriter meanaddspread = new BufferedWriter(new FileWriter(curdir.toString() + "/MEAN/ENSDIFF/" + filestub + "_mean_spread"));
+                                    BufferedWriter meanaddspread = new BufferedWriter(new FileWriter(curdir.toString() + "/MEAN/" + ensddr + "/" + filestub + "_mean_spread"));
 				    
-				    //System.out.println(curdir.toString() + "/MEAN/ENSDIFF/" + filestub + "mean_spread");
+				    //System.out.println(curdir.toString() + "/MEAN/" + ensddr + "/" + filestub + "mean_spread");
 				    
 				    meanSt = mean.getPoint(0).getTrackDate();
 				    

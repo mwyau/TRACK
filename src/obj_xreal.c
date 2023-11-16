@@ -1,4 +1,5 @@
 #include <Stdio.h>
+#include <stdlib.h>
 #include "grid.h"
 
 extern float period;
@@ -19,9 +20,17 @@ float obj_xreal(int ptx)
 
    if(pb == 'y') {
 
-     if(ptx < 0) xx = *(gr->xgrid + ptx + gr->ix - 1) - period;
-     else if (ptx >= gr->ix) xx = *(gr->xgrid + ptx - gr->ix + 1) + period;
-     else xx = *(gr->xgrid + ptx);
+     if(ptx < 0) {
+       if(abs(ptx) > gr->ix - 1) return GERROR;
+       xx = *(gr->xgrid + ptx + gr->ix - 1) - period;
+     }
+     else if (ptx >= gr->ix) {
+       if(ptx > 2*(gr->ix - 1)) return GERROR;
+       xx = *(gr->xgrid + ptx - gr->ix + 1) + period;
+     }
+     else {
+       xx = *(gr->xgrid + ptx);
+     }
 
      return xx;
 

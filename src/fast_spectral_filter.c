@@ -84,6 +84,7 @@ void fast_spectral_filter(FILE *fdat, int fr1, int fri, int frl)
     off_t place1, place2, chrnum=0;
 
     char **filename, filnm[MAXCHR], band_id[NCHRB];
+    char line[MAXCHR];
 
     FILE **filspec=NULL, *fg=NULL;
 
@@ -284,7 +285,8 @@ void fast_spectral_filter(FILE *fdat, int fr1, int fri, int frl)
 
           fg = open_file(filnm, "r");
 
-          fscanf(fg, "%d %d", &(newg->ix), &(newg->iy));
+          fgets(line, MAXCHR, fg);
+          sscanf(line, "%d %d", &(newg->ix), &(newg->iy));
 
           newg->xgrid = (float *)calloc(newg->ix, sizeof(float));
           mem_er((newg->xgrid == NULL) ? 0 : 1, newg->ix * sizeof(float));

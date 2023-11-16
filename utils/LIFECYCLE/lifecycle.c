@@ -1,4 +1,5 @@
 #include <Stdio.h>
+#include <Math.h>
 #include <stdlib.h>
 #include "splice.h"
 
@@ -49,9 +50,10 @@ int main(void)
 
     float alat, alng;
     float str;
-    float astr[NBIN];
+    float astr[NBIN], astr2[NBIN];
     float sum=0.0;
     float sum10=0.0;
+    float sum20=0.0;
 
     FILE *ftr=NULL, *flif=NULL, *ftnd=NULL;
     FILE *fcmp=NULL;
@@ -119,7 +121,7 @@ int main(void)
        }
     }
     else{
-       for(i=0; i < NBIN; i++) {astr[i] = 0.0; nbin[i] = 0;}
+       for(i=0; i < NBIN; i++) {astr[i] = 0.0; astr2[i] = 0.0; nbin[i] = 0;}
     }
 
     printf("Center tracks wrt '0' max. intensity     \r\n"
@@ -191,18 +193,29 @@ int main(void)
 	       ib = icent + fp->fr_id;
                if(ib < 0 || ib >= NBIN) continue;
                astr[ib] += str;
+               astr2[ib] += (str * str);
                nbin[ib] += 1;
 
            }
        }
 
        for(i=0; i < NBIN; i++) {
-           if(nbin[i]) astr[i] /= (float)nbin[i];
+           if(nbin[i]) {
+              astr[i] /= (float)nbin[i];
+              astr2[i] = (astr2[i] / (float)nbin[i]) - astr[i] * astr[i];
+              if(astr2[i] > 0.0) {
+                 astr2[i] = sqrt(astr2[i]);
+              }
+              else {
+                 astr2[i] = 0.0;
+              }
+           }
            sum += astr[i];
-           fprintf(flif, "%d %e\n", -icent + i, astr[i]);
+           fprintf(flif, "%d %e %e\n", -icent + i, astr[i], astr2[i]);
        }
 
        for(i=90; i< 111; i++) sum10 += astr[i];
+       for(i=80; i< 121; i++) sum20 += astr[i];
 
        ftnd = fopen("tendency.dat", "w");
        if(!ftnd){
@@ -219,7 +232,7 @@ int main(void)
 
     fclose(flif);
 
-    printf("sum=%f sum10=%f\n", sum, sum10);
+    printf("sum=%f sum10=%f sum20=%f\n", sum, sum10, sum20);
 
     return 0;
 }

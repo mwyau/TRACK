@@ -33,10 +33,11 @@ double ortho_dist(struct fet_pt_tr *fp1, struct fet_pt_tr *fp2, int nf2, int *is
     for(i=*ist; i < nf2; i++){
 
        ff1 = fp2 + i - 1;
+       ff2 = fp2 + i;
+       if(ff1->xf > ADD_CHECK || ff2->xf > ADD_CHECK) continue; 
        a.x = ff1->pp[0];
        a.y = ff1->pp[1];
        a.z = ff1->pp[2];
-       ff2 = fp2 + i;
        b.x = ff2->pp[0];
        b.y = ff2->pp[1];
        b.z = ff2->pp[2];

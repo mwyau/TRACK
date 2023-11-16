@@ -14,7 +14,8 @@ public final class Constants {
 
 /** Array dimensions */
 
-  public static final int LT_MAX = 65;
+/**  public static final int LT_MAX = 65; */
+  public static final int LT_MAX = 185;
 
 /** Constants for checking missing values */
 

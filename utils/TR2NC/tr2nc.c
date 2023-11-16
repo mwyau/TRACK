@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
    
    struct tot_tr *tracks=NULL;
 
-   if(argc < 3){
+   if(argc != 4){
 
      printf("****ERROR***, %s \n", com);
      exit(1);

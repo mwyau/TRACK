@@ -17,6 +17,7 @@ typedef struct _reg{
 struct tot_tr *read_tracks(FILE *, int *, int *, int *, int , float *, float * , float ** , int * );
 void meantrd(FILE * , struct tot_tr * , int , int , int , int , float , float );
 int region(struct fet_pt_tr * , REG * , int, int );
+int orog_test(float * , float * , int , int , int * , float , float );
 
 extern int nfld, nff;
 extern int *nfwpos;
@@ -34,19 +35,30 @@ int main(void)
     int gpr=0, ipr=0;
     int ireg=0;
     int ninreg=0;
+    
+    int lglng, lglat;
+    int irog='n';
 
     int *ifld=NULL;
     int *ifncnt=NULL;
     int *imnmx=NULL;
+    int *itmxmn=NULL;
+    
+    int *ilms=NULL;
+    
 
     float alat=0.0, alng=0.0;
 
     float *fthr=NULL;
 
     float fadd=0.0;
+    
+    float *lms=NULL;
+    float *glng=NULL, *glat=NULL;
 
     FILE *fin=NULL, *fout=NULL;
     FILE *fcmp=NULL;
+    FILE *flm=NULL;
 
     char filin[MAXCHR];
     char filout[MAXCHR];
@@ -78,6 +90,29 @@ int main(void)
 
        fclose(fcmp); fcmp = NULL;
        
+    }
+    
+    flm = fopen("lmask.dat", "r");
+    if(flm){
+       printf("****INFORMATION****, using land mask file lmask.dat\n\n");
+       fgets(buff, MAXCHR, flm);
+       sscanf(buff, "%d %d", &lglng, &lglat);
+       glng = (float *)calloc(lglng, sizeof(float));
+       glat = (float *)calloc(lglat, sizeof(float));
+       lms = (float *)calloc(lglng*lglat, sizeof(float));
+       ilms = (int *)calloc(lglng*lglat, sizeof(int));
+       for(i=0; i < lglng; i++) fscanf(flm, "%f", glng + i); 
+       for(i=0; i < lglat; i++) fscanf(flm, "%f", glat + i);
+       fgets(buff, MAXCHR, flm);
+       fgets(buff, MAXCHR, flm);
+       fread(lms, lglng*lglat*sizeof(float), 1, flm);
+       fclose(flm);
+       for(i=0; i < lglng*lglat; i++) *(ilms + i) = (int)(*(lms + i)); 
+       
+       printf("Do you want to check for land points, 'y' or 'n', if land then point is not used for identification.\n\n");
+       scanf("\n");
+       irog = getchar();
+
     }
 
     printf("What track file is required?\n\n");
@@ -111,6 +146,9 @@ int main(void)
     imnmx = (int *) calloc(nft, sizeof(int));
     mem_er((imnmx == NULL) ? 0 : 1, nft*sizeof(int));
 
+    itmxmn = (int *) calloc(nft, sizeof(int));
+    mem_er((itmxmn == NULL) ? 0 : 1, nft*sizeof(int));
+
     fthr = (float *) calloc(nft, sizeof(float));
     mem_er((fthr == NULL) ? 0 : 1, nft*sizeof(float));
 
@@ -130,6 +168,20 @@ int main(void)
           printf("****ERROR****, incorrect option chosen.\n\n");
           exit(1);
        }
+
+       if(! ireg && *(ifld + i)){
+          if(*(nfwpos + *(ifld + i) - 1)){
+             printf("Additional field has locational information, due you want to test for true max or min, \r\n"
+                    "'0' for no and '1' for yes.                                                          \n\n");
+             scanf("%d", itmxmn + i);
+             if(*(itmxmn + i) < 0 || *(itmxmn + i) > 1){
+               printf("****ERROR****, incorrect option chosen.\n\n");
+               exit(1);
+             }	     
+          }
+       }
+       else *(itmxmn + i) = 0;
+
 
        printf("What threshold is required for this field?\n");
        scanf("%f", fthr + i);
@@ -154,6 +206,10 @@ int main(void)
 
        for(j=0; j< atr->num; j++){
           pt = atr->trpt + j;
+	  
+	  if(irog == 'y'){
+             if(orog_test(glng, glat, lglng, lglat, ilms, pt->xf, pt->yf)) {nct = 0; continue;}
+          }
 	  
 	  nmat = 0;
 	  
@@ -187,6 +243,13 @@ int main(void)
                  fadd = pt->add_fld[*(ifncnt + k)]; 	
 
                  if(fadd > ADD_CHECK) continue;
+
+/* put test for true max or min here */
+
+                 if(*(itmxmn + i)){
+		    if(pt->add_fld[*(ifncnt + k) - 1] > ADD_CHECK) continue;
+		 }
+
                  if(! *(imnmx + k)){
                     if(fadd <= *(fthr + k)) ++nmat;
                  }
@@ -235,6 +298,7 @@ int main(void)
 
     free(ifld);
     free(imnmx);
+    free(itmxmn);
     free(fthr);
     
     

@@ -81,9 +81,10 @@ void spectral_filter(FILE *fdat, int fr1, int fri, int frl)
     FILE **filspec=NULL;
 
     char filename[MAXCHR], band_id[NCHRB];
+    char line[MAXCHR];
 
-    printf("****WARNING****, data must currentely be defined on a global domain\r\n"
-           "                 and have no missing data values.                  \n\n");
+    printf("****WARNING****, data must currently be defined on a global domain\r\n"
+           "                 and have no missing data values.                 \n\n");
 
     if(form == 4){
 
@@ -154,7 +155,8 @@ void spectral_filter(FILE *fdat, int fr1, int fri, int frl)
 
              fg = open_file(filename, "r");
 
-             fscanf(fg, "%d %d", &(newg->ix), &(newg->iy));
+             fgets(line, MAXCHR, fg);
+             sscanf(line, "%d %d", &(newg->ix), &(newg->iy));
 
              newg->xgrid = (float *)calloc(newg->ix, sizeof(float));
              mem_er((newg->xgrid == NULL) ? 0 : 1, newg->ix * sizeof(float));

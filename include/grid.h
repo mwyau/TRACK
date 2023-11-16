@@ -3,7 +3,7 @@
 #define  MVAL     1.0e+20      /* generic missing value  */
 
 #define REPORT    1
-#define TOLGRID   0.0005
+#define TOLGRID   0.001 
 #define GERROR    9999.9999
 #define MAXFRM    10000
 #define MXPRCH    50

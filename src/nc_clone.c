@@ -139,7 +139,8 @@ NETCDF_INFO *nc_clone(NETCDF_INFO *fdatin, char *nfile, int mode)
          if(!(fdat->invar)) scanf("%d", &(fdat->ifield));
          else {
             scanf("%s", fdat->name);
-            nc_inq_varid(fdat->ncid, fdat->name, &(fdat->ifield));
+            if((ierr=nc_inq_varid(fdat->ncid, fdat->name, &(fdat->ifield))) != NC_NOERR)
+               handle_error(ierr, __FILE__, __LINE__);
          }
        }
 
@@ -257,7 +258,7 @@ NETCDF_INFO *nc_clone(NETCDF_INFO *fdatin, char *nfile, int mode)
 
        if(fdat->ioff){
           printf("****INFORMATION****, data has an offset factor ,     \r\n"
-                 "                     scaling factor is %e.           \n\n", fdat->fld_offset);
+                 "                     offset factor is %e.            \n\n", fdat->fld_offset);
        }
 
     }

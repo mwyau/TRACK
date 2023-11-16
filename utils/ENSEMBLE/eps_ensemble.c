@@ -884,10 +884,18 @@ SKIP:
                      ++(mtrack->num);
                   }
                   else {
-                     fp1->xf = 0.0;
+                     fp1->xf = ADD_UNDEF;
+                     fp1->yf = ADD_UNDEF;
+                     fp1->zf = ADD_UNDEF;
+                     if(nff){
+                       for(k=0; k < nfld; k++){
+                          fp1->add_fld[k] = ADD_UNDEF;
+                       }
+                     }
+/*                   fp1->xf = 0.0;
                      fp1->yf = 0.0;
                      fp1->zf = 0.0;
-                     fp1->time = 0;
+                     fp1->time = 0;   */
                   }
 
               }
@@ -899,6 +907,12 @@ SKIP:
               mtrack->trpt = mtrack->trpt + ipt;
 
               if(mtrack->num){
+/* check times */
+                 for(j=0; j < mtrack->num; j++){
+                    fp1 = mtrack->trpt + j;
+                    if(!fp1->time && j > 0) fp1->time = new_time((fp1 - 1)->time, timint);
+                 }
+
                  fout=fopen(trout, "w");
                  if(!fout){
                     printf("****ERROR****, can't open file %s for write.\n\n", trout);

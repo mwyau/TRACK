@@ -259,7 +259,6 @@ void compute_vorticity(FILE *fst, off_t pl, int iper)
                latf = (FILE *)nc_clone((NETCDF_INFO *)fst, latfil, NC_OPEN_MODE);
                ((NETCDF_INFO *)latf)->iframe = 0;	    
 	    }    
-	 }
 	 
 	 read_field(lat2d, NULL, 1.0, latf, 1, 'n', 'n', '0', 'n');
 	 
@@ -270,6 +269,7 @@ void compute_vorticity(FILE *fst, off_t pl, int iper)
          if(form != 4) close_file(latf, latfil);
          else netcdf_close((NETCDF_INFO *)latf); 
 	 free(lat2d);
+         }
       }
 
    }
@@ -537,7 +537,7 @@ void compute_vorticity(FILE *fst, off_t pl, int iper)
 
 
        if(ictype < 3) {
-  
+
           if(!nfu && !nfv){
 
 /* read U */

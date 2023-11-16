@@ -77,6 +77,7 @@ void convert_track(struct tot_tr * , int , int , int );
 int find_last(struct fet_pt_tr * , struct feature_pts * , int * , int * , int , int );
 double fvec(VEC * , VEC * , VEC * , VEC * );
 double dirangle(struct tot_tr * , double * , double * , int , int , int , int );
+double dirangle_shear(struct tot_tr * , double * , double * , int , int , int , int );
 void vec_offset(struct feature_pts * , double , double , double , double );
 int missing(float, float, int );
 void smoopy_setup(int );
@@ -173,6 +174,11 @@ void additional_fields(struct tot_tr *trs, int trnum, off_t pl, FILE *fst, int i
    int intrp_type=0;
    int icirc=1;
    int iproj=0;
+   
+/* Shear */
+
+   int ishx=0, ishy=0;
+   int ifshx=0, ifshy=0;
 
    long int ptnum=0;
 
@@ -518,51 +524,87 @@ void additional_fields(struct tot_tr *trs, int trnum, off_t pl, FILE *fst, int i
          exit(1);
       }
 
-      printf("Use system direction as the preferred direction when compositing, 'y' or 'n'.\n\n");
+      printf("Use system or shear direction as the preferred direction when compositing, 'y' or 'n'.\n\n");
       scanf("\n");
       if(getchar() == 'y') {
-         idir = 1;
-         printf("****INFORMATION****, using direction of system motion to orientate the composite sampling grid.\n\n");
-	 
-	 printf("Do you want to use the default location for system direction or one of the added fields, input '0' for default or '1' to choose.\n\n");
-	 scanf("%d", &idiradd);
-	 
-	 if(idiradd < 0 || idiradd > 1){
-	    printf("****ERROR****, incorrect specifier, %d\n", idiradd);
+         printf("Input '1' to use system direction or '2' for shear direction.\n\n");
+	 scanf("%d", &idir);
+	 if(idir < 1 || idir > 2){
+	    printf("****ERROR****, direction identifier not known, exiting.\n\n");
 	    exit(1);
 	 }
+         if(idir == 1){
+            printf("****INFORMATION****, using direction of system motion to orientate the composite sampling grid.\n\n");
 	 
-	 if(idiradd) {
+	    printf("Do you want to use the default location for system direction or one of the added fields, input '0' for default or '1' to choose.\n\n");
+	    scanf("%d", &idiradd);
 	 
-	    printf("****INFORMATION****, additional field for direction should have location and have no missing location values.\n\n");
+	    if(idiradd < 0 || idiradd > 1){
+	       printf("****ERROR****, incorrect specifier, %d\n", idiradd);
+   	       exit(1);
+	    }
 	 
-	    printf("Which additional field is required for direction?\n\n");
-	    scanf("%d", &ifdir);
+	    if(idiradd) {
+	 
+	       printf("****INFORMATION****, additional field for direction should have location and have no missing location values.\n\n");
+	 
+	       printf("Which additional field is required for direction?\n\n");
+	       scanf("%d", &ifdir);
 	    
 
-            if(ifdir < 0 || ifdir > nff){
+               if(ifdir < 0 || ifdir > nff){
+                  printf("****ERROR****, additional field Id. does not exist, exiting.\n\n");
+                  exit(1);
+               }
+
+               if(ifdir){
+                  if(*(nfwpos + ifdir - 1)){
+                     ifdirp = 0;
+                     for(j=0; j < ifdir - 1; j++){
+                        if(*(nfwpos + j)) ifdirp += 3;
+                        else ifdirp += 1;
+                     }
+                  }
+                  else{
+                     printf("****ERROR****, selected field does not have positional information, exiting.\n\n");
+                     exit(1);      
+                  }
+
+               }
+	    
+	       convert_track(trs, trnum, ifdir, ifdirp);
+	  
+	    }
+	 
+	 }
+	 
+	 else if (idir == 2){
+	    printf("What is the additional fields with the X and Y shear values?\n\n");
+	    scanf("%d %d", &ishx, &ishy);
+	    
+	    if((ishx < 0 || ishx > nff) || (ishy < 0 || ishy > nff)){
                printf("****ERROR****, additional field Id. does not exist, exiting.\n\n");
                exit(1);
             }
-
-            if(ifdir){
-               if(*(nfwpos + ifdir - 1)){
-                  ifdirp = 0;
-                  for(j=0; j < ifdir - 1; j++){
-                     if(*(nfwpos + j)) ifdirp += 3;
-                     else ifdirp += 1;
-                  }
+	    
+	    if(ishx){
+               ifshx = 0;
+               for(j=0; j < ishx - 1; j++){
+                  if(*(nfwpos + j)) ifshx += 3;
+                  else ifshx += 1;
                }
-               else{
-                  printf("****ERROR****, selected field does not have positional information, exiting.\n\n");
-                  exit(1);      
-               }
-
             }
 	    
-	    convert_track(trs, trnum, ifdir, ifdirp);
-	  
+	    if(ishy){
+               ifshy = 0;
+               for(j=0; j < ishy - 1; j++){
+                  if(*(nfwpos + j)) ifshy += 3;
+                  else ifshy += 1;
+               }
+            }	    
+	    
 	 }
+	 
 
          printf("Do you want to use the current point to determine system direction or average over several points\r\n"
                 "to improve direction smoothness, input '1' for single point or 'n' the number of points to use.  \r\n"
@@ -869,7 +911,7 @@ void additional_fields(struct tot_tr *trs, int trnum, off_t pl, FILE *fst, int i
 
         strcat(trout, "_reg");
         tsf = open_file(trout, "w");
-        fprintf(tsf, "%6d %10ld %6d %6d %2d %2d %3d %2d %2d %2d %2d %2d\n", trnum, ptnum, ntheta, nr, nwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ);
+        fprintf(tsf, "%6d %10ld %6d %6d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n", trnum, ptnum, ntheta, nr, nwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ, ishx, ishy);
 
         fwrite(slng, ntheta * sizeof(float), 1, tsf);
         fprintf(tsf, "\n");
@@ -909,7 +951,7 @@ void additional_fields(struct tot_tr *trs, int trnum, off_t pl, FILE *fst, int i
         }
 
         fseeko(tsf, (off_t)0, SEEK_SET);
-        fprintf(tsf, "%6d %10ld %6d %6d %2d %2d %3d %2d %2d %2d %2d %2d\n", ns, ptnum, ntheta, nr, nwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ);
+        fprintf(tsf, "%6d %10ld %6d %6d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n", ns, ptnum, ntheta, nr, nwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ, ishx, ishy);
 
         nfll = place2 - place1;
         
@@ -1964,7 +2006,13 @@ void additional_fields(struct tot_tr *trs, int trnum, off_t pl, FILE *fst, int i
                        pt1.x = atr->pp[0];
                        pt1.y = atr->pp[1];
                        pt1.z = atr->pp[2];
-                       arot =   dirangle(altr, &cn, &sn, pt_id, ndsmth, ifdir, ifdirp);
+		       if(idir == 1) {
+                          arot = dirangle(altr, &cn, &sn, pt_id, ndsmth, ifdir, ifdirp);
+		       }
+		       else {
+                          arot = dirangle_shear(altr, &cn, &sn, pt_id, ndsmth, ifshx, ifshy);		       
+		       }
+
 		       if(arot > ADD_CHECK) continue; 
 
                        norm = dotp(&vsdir, &pt1);
@@ -2973,7 +3021,7 @@ double dirangle(struct tot_tr *altr, double *cn, double *sn, int pt_id, int ndsm
    }
 
    if(ndsmth % 2) {st = pt_id - n2; en = pt_id + n2;}
-   else {st = pt_id - n2 - 1; en = pt_id + n2;}
+   else {st = pt_id - n2; en = pt_id + n2 - 1;}
 
    if(st < 0) st = 0;
    if(en > altr->num - 2) en = altr->num - 2;
@@ -2984,11 +3032,13 @@ double dirangle(struct tot_tr *altr, double *cn, double *sn, int pt_id, int ndsm
        if(ifdir){
           xx = *(atr->add_fld + ifdirp) * FP_PI;
           yy = FP_PI2 - *(atr->add_fld + ifdirp + 1) * FP_PI;     
+          if(*(atr->add_fld + ifdirp) > ADD_CHECK || *((atr+1)->add_fld + ifdirp) > ADD_CHECK) continue;
        }
        else {
           xx = atr->xf * FP_PI;
           yy = FP_PI2 - atr->yf * FP_PI;
        }      
+
        if(yy < 0.) yy = 0.0;
        
        sincos(xx, &s1, &c1);
@@ -3031,7 +3081,7 @@ double dirangle(struct tot_tr *altr, double *cn, double *sn, int pt_id, int ndsm
        addv(&vn, &vt3, &vn);
 
        if(fabs(dotp(&vn, &tvec) - 1.0) > 1.0e-4){
-         printf("****ERROR****, orientating radial grid to storm direction incorrect, dotp=%e > 1.0e-6.\n\n", fabs(dotp(&vn, &tvec) - 1.0));
+         printf("****ERROR****, orientating radial grid to storm direction incorrect, dotp=%e > 1.0e-4.\n\n", fabs(dotp(&vn, &tvec) - 1.0));
          exit(1);
        }
 
