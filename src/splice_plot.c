@@ -259,7 +259,8 @@ void splice_plot(struct tot_tr *all_tr, int tot_fet, int tr_count, int izm, int 
 
          if(tr_mode == 'i') altr += trid - 1;
 
-         if(altr->num > 0) {pmin = pmax = altr->trpt->zf; break;}
+         if(!iadd && altr->num > 0) {pmin = pmax = altr->trpt->zf; break;}
+         else if (altr->num > 0) {pmin = pmax = altr->trpt->add_fld[iff]; break;}
 
      }
 

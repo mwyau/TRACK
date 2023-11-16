@@ -3,7 +3,6 @@
 #include <math.h>
 #include "splice.h"
 
-#define MAXCHR     50
 
 /* program to convolve the weights from two different teleconnections */
 
@@ -21,15 +20,13 @@ extern int iper_num;
 int main(int argc, char **argv)
 {
 
-    int i, j;
-    int trnum1, trnum2;
-    int gpr1, ipr1, gpr2, ipr2;
-    int nw1, nw2;
+    int i=0, j=0;
+    int trnum1=0, trnum2=0;
+    int gpr1=0, ipr1=0, gpr2=0, ipr2=0;
+    int nw1=0, nw2=0;
 
-    float *wght1, *wght2;
+    float *wght1=NULL, *wght2=NULL;
     float swght=0.0;
-
-    char trout[MAXCHR];
 
     char usg[] = "Usage: convolve [track file 1] [track file 2] [outfile]";
 
@@ -52,8 +49,6 @@ int main(int argc, char **argv)
     printf("***WRANING***, it is the users responsibility that the two\r\n"
            "               track files are identical apart from their \r\n"
            "               weight values.                             \n\n");
-
-    sscanf(trout, "%s", argv[3]);
 
     fin1 = fopen(argv[1], "r");
     if(!fin1){

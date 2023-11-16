@@ -22,7 +22,8 @@ int cholesky(double **aa, int ncof)
 
            printf("****ERROR****, normal equations matrix probably not \r\n"
                   "               positive to within set tolerance.    \r\n"
-                  "               No least squares solution availavble.\n\n"); 
+                  "               No least squares solution availavble.\r\n"
+                  "               %e < %e                              \n\n", ad, TOLDIAG); 
            return 1;
 
         }

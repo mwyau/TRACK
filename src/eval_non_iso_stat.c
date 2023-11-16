@@ -226,7 +226,7 @@ double variance_non_iso(double mean, struct dpt *spt, struct dpt *dt, double *pl
 
        tsm = (1.0 + ts) / ts;
 
-       cd = 1.0 - tsm;
+       cd = tsm - 1.0;
 
        pp = pcom + j;
 

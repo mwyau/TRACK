@@ -116,7 +116,7 @@ double sqt_eval_stat(double *plt, double **den, struct dpt *st, struct dpt *dt, 
 
          cn *= tsm;
 
-         cd = 1.0 - tsm;
+         cd = tsm - 1.0;
 
          con = cn / pow(cd, ipp);
          sang = sin(acos(1.0 / tsm));

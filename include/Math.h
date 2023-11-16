@@ -1,3 +1,5 @@
+#ifndef MY_MATH_H
+#define MY_MATH_H
 #if defined(CYGWIN) || defined(MAC)
 #include "/usr/include/math.h"
 #else
@@ -11,5 +13,7 @@
 #elif !defined(SUNOS4)
 
 void sincos(double , double * , double * );
+
+#endif
 
 #endif

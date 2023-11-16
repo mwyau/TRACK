@@ -9,7 +9,7 @@
 #define TOLMATCH    2.0
 #define DISTLARGE  180.0
 #define TOLNUM     0.6
-#define MAXCHR     50
+/* #define MAXCHR     50  */
 #define FILENAME    "match_"
 #define ID1        -10.0
 #define ID2        10.0

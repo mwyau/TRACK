@@ -90,10 +90,15 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
        dist = DLARGE;
 
        if(!isepty){
+
+	  ndf = 0;
+
           for(i=0; i < num; i++){
 
              fp1 = tr1->trpt + it1s + i;
              fp2 = tr2->trpt + it2s + i;
+
+	     if(fp1->xf > ADD_CHECK || fp2->xf > ADD_CHECK) continue;
 
              (fpts1.x).xy = fp1->xf;
              (fpts1.y).xy = fp1->yf;
@@ -108,7 +113,10 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
              }
 
              if(ddd < dist) dist = ddd;
+	     ++ndf;
          }
+
+	 if(!ndf) num = 0;
       
       }
       
@@ -118,6 +126,7 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
 	 ndf = 0;
          for(i=0; i < num; i++){
 	     fp1 = tr1->trpt + it1s + i;
+	     if(fp1->xf > ADD_CHECK) continue;
 	     if(ist < tr2->num){
 	        ddd = ortho_dist(fp1, tr2->trpt, tr2->num, &ist, ifnd, 1, &visec);
 		if(ifnd && ist > 0) {
@@ -148,6 +157,8 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
 	 
 	 }
 
+	 if(!ndf) num = 0;
+
       }
 
     }
@@ -155,10 +166,14 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
     else {
 
       if(!isepty){
+
+	 ndf = 0;
          for(i=0; i < num; i++){
 
              fp1 = tr1->trpt + it1s + i;
              fp2 = tr2->trpt + it2s + i;
+
+	     if(fp1->xf > ADD_CHECK || fp2->xf > ADD_CHECK) continue;
 
              (fpts1.x).xy = fp1->xf;
              (fpts1.y).xy = fp1->yf;
@@ -173,9 +188,11 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
              }
 
              dist += ddd;
+	     ++ndf;
          } 
 	 
-	 if(num > 0) dist /= num;
+	 if(ndf > 0) dist /= ndf;
+	 else num = 0;
        
       }
       else {
@@ -184,6 +201,7 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
 	 ndf = 0;
          for(i=0; i < num; i++){
 	     fp1 = tr1->trpt + it1s + i;
+             if(fp1->xf > ADD_CHECK) continue;
 	     v1.x = fp1->pp[0];
 	     v1.y = fp1->pp[1];
 	     v1.z = fp1->pp[2];
@@ -219,10 +237,12 @@ float trdist_eps(struct tot_tr *tr1, struct tot_tr *tr2, float disth, long int i
 	 }
 	 
          if(ndf > 0) dist /= ndf;
+	 else num = 0;
 
       }
 
     }
+
 
     if(num > 0){
       *numm = numt;

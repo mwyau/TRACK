@@ -153,6 +153,7 @@ for line in f:
     if e[0] == 'TRACK_ID':
       track_ids.append(e[-1])
       track_name = 'track_' + str(int(track_ids[-1]))
+      print(track_name)
  
       ### Pushing points out for sorting
       all_tracks_list.append(track_data)

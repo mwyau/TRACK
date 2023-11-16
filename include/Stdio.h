@@ -1,3 +1,5 @@
+#ifndef MY_STDIO_H
+#define MY_STDIO_H
 #if defined(CYGWIN) || defined(MAC)
 #include "/usr/include/stdio.h"
 #else
@@ -36,4 +38,4 @@ extern  void  setbuf(FILE * , char *);
 
 #endif
 
-
+#endif

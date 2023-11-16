@@ -101,7 +101,7 @@ public class Spread{
 		FilenameFilter fmatchtyp = new FilenameFilter() {
                    public boolean accept(File d, String name) {
                       boolean ret;
-                      if(name != null && (name.startsWith("trmatch") && ! name.endsWith("_mean"))) {
+                      if(name != null && (name.startsWith("trmatch") && ! name.endsWith("_mean") && ! name.endsWith(".nc"))) {
                         ret = true;
                       }
                       else ret = false;

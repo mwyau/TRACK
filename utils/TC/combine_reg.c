@@ -18,6 +18,9 @@ int main()
    int nifcnt=0, nitpadd=0, niprojd=0;
 
    int nfil=0;
+   
+   int ishx=0, ishy=0;
+   int ishx2=0, ishy2=0;
 
    int igsmp_typ=0, nigsmp_typ=0;
 
@@ -40,7 +43,7 @@ int main()
       exit(1);
    }
 
-   fprintf(fout, "%6d %10ld %6d %6d %2d %2d %3d %2d %2d %2d %2d %2d\n", trnum, ptnum, ntheta, nr, nwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ);
+   fprintf(fout, "%6d %10ld %6d %6d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n", trnum, ptnum, ntheta, nr, nwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ, ishx, ishy);
 
    for(i=0; i < nfil; i++){
        printf("What is the next file to read?\n\n");
@@ -56,7 +59,7 @@ int main()
        }
 
        fgets(line, 100, fin);
-       sscanf(line, "%d %ld %d %d %d %d %d %d %d %d %d %d", &trnum, &ptnum, &ntheta, &nr, &nwfld, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+       sscanf(line, "%d %ld %d %d %d %d %d %d %d %d %d %d %d %d", &trnum, &ptnum, &ntheta, &nr, &nwfld, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
 
        if(!i) {
           idim = nr * ntheta;
@@ -73,7 +76,7 @@ int main()
        else{
           if(ntheta != nntheta || nr != nnr || nwfld != nnwfld || idir != nidir || ndsmth != nndsmth ||
              nifcnt != ifcnt || nitpadd != itpadd || niprojd != iprojd || ifdir != nifdir || 
-             nigsmp_typ != igsmp_typ                                                                    ){
+             nigsmp_typ != igsmp_typ || ishx != ishx2 || ishy != ishy2                                  ){
              printf("****ERROR****, incompatable data for this file.\n\n");
              exit(1);
           }
@@ -117,12 +120,14 @@ int main()
        niprojd = iprojd;
        nifdir = ifdir;
        nigsmp_typ = igsmp_typ;
+       ishx2 = ishx;
+       ishy2 = ishy;
        
    }
 
    fseeko(fout, 0L, SEEK_SET);
 
-   fprintf(fout, "%6d %10ld %6d %6d %2d %2d %3d %2d %2d %2d %2d %2d\n", ntr, nptnum, nntheta, nnr, nnwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ);   
+   fprintf(fout, "%6d %10ld %6d %6d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n", ntr, nptnum, nntheta, nnr, nnwfld, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ, ishx, ishy);   
 
    fclose(fout);
 

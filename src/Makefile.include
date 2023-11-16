@@ -45,6 +45,7 @@ CSOURCES =  add_point_to_object.c \
 	    dfct2d.c \
             devn.c \
             dfft.c \
+            dirangle_shear.c \
             disp.c \
             disp_filter.c \
             dist_trans.c \

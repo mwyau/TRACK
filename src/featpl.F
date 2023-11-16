@@ -348,7 +348,7 @@ c      XS = 0.001*XSIZE
        ELSE
           ICM = ICM+1
           GOTO 40
-        ENDIF
+       ENDIF
       ENDIF
 
 C

@@ -89,7 +89,7 @@ struct tot_tr *splice(int *trackn)
     int imiss=0;
     int lpos=0, lneg=0, iextm=0;
     int ld1=0, ld2=0;
-    int tstep=0;
+    int tstep=0, nrate=1;
     
     int tnum=0, trty=0;
 
@@ -658,8 +658,12 @@ plot:
           exit(1);
        }
 
+       printf("What is the sampling rate in time steps for computing growth rates? \r\n"
+              "A rate of 1 is every time step.                                     \n\n");
+       scanf("%d", &nrate);
+
        if(trtyp != 'v' && igrwth == 2){
-          printf("What is the time step for computing growth rates?\n\n");
+          printf("What is the time step for computing growth rates, in time units?\n\n");
           scanf("%d", &tstep);
        }
 
@@ -716,10 +720,13 @@ plot:
                        else str = atr->gwthr;
                     }
                     else {
-                       if(j >= altr->num-1)break;
-                       atr2 = atr + 1;
+                       if(j >= altr->num-nrate)break;
+                       atr2 = atr + nrate;
                        str1 = (iadd) ? atr->add_fld[iff]: atr->zf;
                        str2 = (iadd) ? atr2->add_fld[iff]: atr2->zf;
+                       if(imiss){
+                         if(str1 > ADD_CHECK || str2 > ADD_CHECK) continue;
+                       }
                        if(igrwth == 1) str = str2 - str1;
                        else  str = (str2 - str1) / (float)tstep;           
                     }
@@ -754,10 +761,13 @@ plot:
                        else str = atr->gwthr;
                     }
                     else {
-                       if(j >= altr->num-1)break;
-                       atr2 = atr + 1;
+                       if(j >= altr->num-nrate)break;
+                       atr2 = atr + nrate;
                        str1 = (iadd) ? atr->add_fld[iff]: atr->zf;
                        str2 = (iadd) ? atr2->add_fld[iff]: atr2->zf;
+                       if(imiss){
+                         if(str1 > ADD_CHECK || str2 > ADD_CHECK) continue;
+                       }
                        if(igrwth == 1) str = str2 - str1;
                        else  str = (str2 - str1) / (float)tstep;           
                     }
@@ -790,10 +800,13 @@ plot:
                        else str = atr->gwthr;
                     }
                     else {
-                       if(j >= altr->num-1)break;
-                       atr2 = atr + 1;
+                       if(j >= altr->num-nrate)break;
+                       atr2 = atr + nrate;
                        str1 = (iadd) ? atr->add_fld[iff]: atr->zf;
                        str2 = (iadd) ? atr2->add_fld[iff]: atr2->zf;
+                       if(imiss){
+                         if(str1 > ADD_CHECK || str2 > ADD_CHECK) continue;
+                       }
                        if(igrwth == 1) str = str2 - str1;
                        else  str = (str2 - str1) / (float)tstep;           
                     }

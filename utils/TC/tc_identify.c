@@ -39,10 +39,11 @@ void write_profile_netcdf(char * , double * , float * , int , int , int , long i
 
 void radial_extreme(FILE * , FILE * , FILE * , float * , float * , float, int , int , off_t * , off_t * , off_t * );
 double dirangle(struct tot_tr * , double * , double * , int , int , int , int );
+double dirangle_shear(struct tot_tr * , double * , double * , int , int , int , int );
 float *leveldata(int );
 double prop_speed(struct tot_tr * , int );
 void line_area_integ(double * , double * , double * , double , double , double * , double , int , int);
-FILE *open_radial_file(char * , int * , long int * , int * , int * , int * , int * , int * , int * , int * , int * , int * , int *);
+FILE *open_radial_file(char * , int * , long int * , int * , int * , int * , int * , int * , int * , int * , int * , int * , int * , int * , int * );
 double line_anomaly(float * , int , int );
 double vert_integ(double * , double * , int , int );
 void setup_rotmatrix(double , double , double , double , VEC * );
@@ -52,10 +53,14 @@ double fvec(VEC * , VEC * , VEC * , VEC * );
 int orog_test(float * , float * , int , int , int * , float , float );
 int inregion(REG * , float , float , long int );
 
+void shear_rot(struct tot_tr * , VEC * , float * , float * , float * , float * , int , int , int , int , int , int , int , int , int );
+void dir_rot(struct tot_tr * , VEC * , float * , float * , float * , float * , int , int , int , int , int , int , int );
 
 int tom='g';
 
 int noheader=0;
+
+int pb='n';
 
 extern float sum_per;
 extern int iper_num;
@@ -101,8 +106,14 @@ int main(void )
     int icgen=0;
     int igsmp_typ=0;
     int nxy=0, nxy2=0;
+    int ndsmth2=0;
     
     int ifdir=0, ifdirp=0;
+
+/* shear parameters */
+
+    int ishx=0, ishy=0;
+    int ifshx=0, ifshy=0;
 
     int irog=0;
     int ifsel=0;
@@ -121,9 +132,13 @@ int main(void )
     int nwtr=0, nctr=0;
     int icomp_order=0;
     int iatyp=0, nmnth=0, nmnr=0, nmlev=0, ia=0;
+    
+    int ithr=1, ith_yes=0;
 
     int *ilms=NULL;
     int idir=0;
+    int iradsr=0;
+    int irdir=0;
 
     int *ifncnt=NULL, *ifncntp=NULL;
 
@@ -151,7 +166,7 @@ int main(void )
 
     float *sradf1=NULL, *sradf2=NULL;
     float *sadd=NULL, *sadd2=NULL;;
-    float *tmp1=NULL, *tmp2=NULL;
+    float *tmp1=NULL, *tmp2=NULL, *stmp=NULL;
     float *sgrdf1=NULL, *sgrdf2=NULL;
     float *slng=NULL, *slat=NULL;
     float *slng2=NULL, *slat2=NULL;
@@ -339,17 +354,97 @@ int main(void )
        printf("What is the filename for the first sampled field, U for winds?\n\n");
        scanf("%s", filrad);
 
-       frad1 = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+       frad1 = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
 
        if(irtrn != trnum){
           printf("****ERROR****, track file and radial field data not compatable: different numbers of tracks.\n\n");
           exit(1);
        }
+       
+       if(idir == 0){
+         printf("Do you want to rotate to propagation direction, '0' for no, '1' for yes.\n\n");
+         scanf("%d", &irdir);
+         if(irdir < 0 || irdir > 1){
+           printf("****ERROR****, wrong flag value %d; exiting\n\n", irdir);
+           exit(1);
+         } 
+
+         if(irdir){
+	 
+            printf("Do you want to use the current point to determine system direction or average over several points\r\n"
+                   "to improve direction smoothness, input '1' for single point or 'n' the number of points to use.  \r\n"
+                   "This will depend on the track lifetime and minimum lifetime threshold.                           \n\n");
+            scanf("%d", &ndsmth2);
+            if(ndsmth2 < 1){
+               printf("****ERROR****, number of points cannot be zero or negative for direction smoothing, exiting.\n\n");
+               exit(1);
+            }
+
+         }
+	 
+         if(irdir){
+            if(iwind) {
+              printf("****ERROR****, can only rotate scaler fields to propagation direction, exiting.\n\n");
+              exit(1);
+            }	    
+	 }            
+
+         convert_track(tracks, trnum, ifdir, ifdirp);
+
+       }
+       else if(idir == 1){
+         printf("Do you want to rotate to shear direction, '0' for no, '1' for yes.\n\n");
+         scanf("%d", &iradsr);
+         if(iradsr < 0 || iradsr > 1){
+           printf("****ERROR****, wrong flag value %d; exiting\n\n", iradsr);
+           exit(1);
+         }
+
+         if(iradsr){
+
+            if(iwind) {
+              printf("****ERROR****, can only rotate scaler fields to shear direction, exiting.\n\n");
+              exit(1);
+            } 
+	    printf("What is the additional fields with the X and Y shear values?\n\n");
+	    scanf("%d %d", &ishx, &ishy);
+
+
+	    
+         }
+       }
+
+       if(idir == 2 || iradsr){
+
+          if((ishx < 0 || ishx > nff) || (ishy < 0 || ishy > nff)){
+             printf("****ERROR****, additional field Id. does not exist, exiting.\n\n");
+             exit(1);
+          }
+
+          if(ishx){
+            ifshx = 0;
+            for(j=0; j < ishx - 1; j++){
+               if(*(nfwpos + j)) ifshx += 3;
+               else ifshx += 1;
+            }
+          }
+	    
+          if(ishy){
+             ifshy = 0;
+             for(j=0; j < ishy - 1; j++){
+                if(*(nfwpos + j)) ifshy += 3;
+                else ifshy += 1;
+             }
+          }	  
+
+          convert_track(tracks, trnum, ifdir, ifdirp);
+
+       }
 
        if(iwind){
           printf("What is the filename for the second sampled field, V for winds?\n\n");
           scanf("%s", filrad);
-          frad2 = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+          frad2 = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
 
           if(idir) {
              if(!ndsmth){
@@ -471,7 +566,7 @@ int main(void )
                 if(!iffl){
                    printf("What is the filename for the additional field?\n\n");
                    scanf("%s", filrad);
-                   fadd = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+                   fadd = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
 
                    printf("Compute deviation from azimuthal average before computing flux, '0' for no or '1' for yes.\n\n");
                    scanf("%d", &idevazm);
@@ -502,7 +597,7 @@ int main(void )
                       if(getchar() == 'y') ike_cb_anom=1;
                       printf("What is the filename for the additional field?\n\n");
                       scanf("%s", filrad);
-                      fadd = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+                      fadd = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
                    }
            
 
@@ -539,10 +634,10 @@ int main(void )
                    iadv = 1;
                    printf("What is the filename for the X(U)-component of the gradient of the additional field?\n\n");
                    scanf("%s", filrad);
-                   fgrdx = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+                   fgrdx = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
                    printf("What is the filename for the Y(V)-component of the gradient of the additional field?\n\n");
                    scanf("%s", filrad);
-                   fgrdy = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+                   fgrdy = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
                    printf("What is the radius to integrate over? Note, a radius larger than the maximum sampled radius \r\n"
                           "will be reset to the maximum sampled radius.                                                \n\n");
                    scanf("%f", &nrad);
@@ -576,7 +671,7 @@ int main(void )
               printf("****INFORMATION****, currently multiplication only.\n\n");
               printf("What is the filename for the additional field?\n\n");
               scanf("%s", filrad);
-              fadd = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ);
+              fadd = open_radial_file(filrad, &irtrn, &iptnum, &irnth, &irnr, &irnf, &idir, &ndsmth, &ifcnt, &itpadd, &iprojd, &ifdir, &igsmp_typ, &ishx, &ishy);
 
               printf("Do you want the anomomaly over the region for the additional field, 'y' or 'n'\n\n");
               scanf("\n");
@@ -985,6 +1080,28 @@ int main(void )
 
        for(i=0; i < irnr; i++) *(coslat + i) = cos(*(slat + i) * FP_PI);
 
+       if(iradsr || irdir){
+
+         vecg = (VEC *)calloc(irdim, sizeof(VEC));
+         mem_er((vecg == NULL) ? 0 : 1, irdim*sizeof(VEC));
+	 
+         stmp = (float *)calloc(irdim, sizeof(float));
+         mem_er((stmp == NULL) ? 0 : 1, irdim * sizeof(float));
+
+         for(i=0; i < irnr; i++){
+             rr = FP_PI2 - *(slat + i) * FP_PI;
+             if(rr < 0.0) rr = 0.0;
+             sincos(rr, &s1, &c1);
+             for(j=0; j < irnth; j++){
+                 sincos(*(slng + j) * FP_PI, &s2, &c2);
+                 vt = vecg + i * irnth + j;
+                 vt->x = s1 * c2;
+                 vt->y = s1 * s2;
+                 vt->z = c1;
+             }
+         }
+
+       }
 
 
 /* calculate data block size */
@@ -1088,6 +1205,13 @@ int main(void )
 
     printf("Specify threshold for identification.\n\n");
     scanf("%f", &thresh);
+    
+    printf("Do you want minimum, '0' or maximum, '1', thresholding?\n\n");
+    scanf("%d", &ithr);
+    if(ithr < 0 || ithr > 1){
+       printf("****ERROR****, incorrect value chosen.\n\n");
+       exit(1);
+    }
 
     if(nff){
        printf("****INFORMATION****, there are additional fields  \r\n"
@@ -1561,8 +1685,16 @@ int main(void )
            }
            else fdif = LARGE;
 	   
+	   ith_yes=0;
+           if(!ithr){
+              if(str <= thresh) ith_yes = 1;
+           }
+           else{
+              if(str >= thresh) ith_yes = 1;
+           }
+	   
 
-           if(str >= thresh && fdif >= fth && iv == nlp){
+           if(ith_yes && fdif >= fth && iv == nlp){
 
               ++istc;
               if(frst < 0) frst = j;
@@ -1693,6 +1825,15 @@ int main(void )
                 for(j=0; j < irnf; j++){
                    fread(sradf1, irdim*sizeof(float), 1, frad1);
                    fscanf(frad1, "%*c");
+
+		   if(irdir) {
+		      dir_rot(atr, vecg, sradf1, stmp, slng, slat, irnth, irnr, ifld, ndsmth2, ifdir, ifdirp, igsmp_typ);
+		   }
+
+                   else if(iradsr)  {
+		       shear_rot(atr, vecg, sradf1, stmp, slng, slat, irnth, irnr, ifld, ndsmth, ifdir, ifdirp, ifshx, ifshy, igsmp_typ);
+		   }
+
                    if(ianom) anomaly(sradf1, coslat, irnr, irnth, iranom, igsmp_typ);
 
                    if(iaddf){
@@ -1780,7 +1921,7 @@ int main(void )
                 pt1.y = fpc->pp[1];
                 pt1.z = fpc->pp[2];
 
-/* has data has been sampled on a grid that has been rotated to direction of storm */
+/* has data has been sampled on a grid that has been rotated to direction of storm  or shear*/
 
                 if(idir){
 
@@ -1797,7 +1938,16 @@ int main(void )
                    pt1.y = fpc->pp[1];
                    pt1.z = fpc->pp[2];
 
-                   arot =   dirangle(atr, &cc1, &ss1, ifld, ndsmth, ifdir, ifdirp);
+                   if(idir == 1){
+                      arot =   dirangle(atr, &cc1, &ss1, ifld, ndsmth, ifdir, ifdirp);
+                   }
+                   else if(idir == 2){
+                      arot = dirangle_shear(atr, &cc1, &ss1, ifld, ndsmth, ifshx, ifshy);
+                   }
+                   else {
+                     printf("****ERROR****, rotation indicator value, %d, not valid.\n\n", idir); 
+                     exit(1);
+                   }
 
                    fprintf(fdir, "%e %e\n", arot/FP_PI, pdirl);
 
@@ -2095,6 +2245,24 @@ int main(void )
 
     strncpy(filout, filin, MAXCHR);
     strcat(filout, ".tcident");
+    
+    if(iselt){
+       for(i=0; i < trnum; i++){
+           atr = tracks + i;
+	   atr2 = tracks2 + i;
+           if(i < itrst || i >= itren) {
+	   
+	      for(j=0; j < atr->num; j++){
+                  free((atr->trpt + j)->add_fld);
+		  free((atr2->trpt + j)->add_fld);
+              }
+              free(atr->trpt);
+	      free(atr2->trpt);
+	      atr->num = 0;
+	      atr2->num = 0;
+	   }
+       }
+    }
 
     fout = fopen(filout, "w");
     if(!fout){
@@ -2652,6 +2820,11 @@ int main(void )
 	  if(xsmp) free(xsmp); free(ysmp);
        }
        free(sadd);
+
+       if(iradsr){
+         free(vecg);
+	 free(stmp);
+       }
  
        if(levdat){
           free(levdat);
@@ -2917,7 +3090,7 @@ double dirangle(struct tot_tr *altr, double *cn, double *sn, int pt_id, int ndsm
    }
 
    if(ndsmth % 2) {st = pt_id - n2; en = pt_id + n2;}
-   else {st = pt_id - n2 - 1; en = pt_id + n2;}
+   else {st = pt_id - n2; en = pt_id + n2 - 1;}
 
    if(st < 0) st = 0;
    if(en > altr->num - 2) en = altr->num - 2;
@@ -2928,13 +3101,14 @@ double dirangle(struct tot_tr *altr, double *cn, double *sn, int pt_id, int ndsm
        if(ifdir){
           xx = *(atr->add_fld + ifdirp) * FP_PI;
           yy = FP_PI2 - *(atr->add_fld + ifdirp + 1) * FP_PI;     
+          if(*(atr->add_fld + ifdirp) > ADD_CHECK || *((atr+1)->add_fld + ifdirp) > ADD_CHECK) continue;
        }
        else {
           xx = atr->xf * FP_PI;
           yy = FP_PI2 - atr->yf * FP_PI;
        }
        if(yy < 0.) yy = 0.0;
-       
+
        sincos(xx, &s1, &c1);
        sincos(yy, &s2, &c2);
        vsdir.x = -c1 * c2;
@@ -2951,7 +3125,7 @@ double dirangle(struct tot_tr *altr, double *cn, double *sn, int pt_id, int ndsm
        crosp(&vtmp, &pt1, &tvec);
        norm = sqrt(dotp(&tvec, &tvec));
        normv(&tvec, norm);
-       
+
        if(norm <= 0.0) continue;
 
 /* compute rotation angle */
@@ -3150,7 +3324,7 @@ void line_area_integ(double *linteg, double *rintg, double *savg, double arcll, 
 
 /* open radial data file for read */
 
-FILE *open_radial_file(char *filrad, int *irtrn, long int *iptnum, int *irnth, int *irnr, int *irnf, int *idir, int *ndsmth, int *ifcnt, int *itpadd, int *iprojd, int *ifdir, int *igsmp_typ)
+FILE *open_radial_file(char *filrad, int *irtrn, long int *iptnum, int *irnth, int *irnr, int *irnf, int *idir, int *ndsmth, int *ifcnt, int *itpadd, int *iprojd, int *ifdir, int *igsmp_typ, int *ishx, int *ishy)
 {
 
     int irtrn2=0;
@@ -3158,6 +3332,7 @@ FILE *open_radial_file(char *filrad, int *irtrn, long int *iptnum, int *irnth, i
     int idir2=0, ndsmth2=0, ifdir2=0;
     int ifcnt2=0, itpadd2=0, iprojd2=0;
     int igsmp_typ2=0;
+    int ishx2=0, ishy2=0;
 
     long int iptnum2=0;
 
@@ -3174,16 +3349,16 @@ FILE *open_radial_file(char *filrad, int *irtrn, long int *iptnum, int *irnth, i
     fgets(line, MAXCHR, frad);
 
     if(!ifrst){
-       sscanf(line, "%d %ld %d %d %d %d %d %d %d %d %d %d", irtrn, iptnum, irnth, irnr, irnf, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ);
+       sscanf(line, "%d %ld %d %d %d %d %d %d %d %d %d %d %d %d", irtrn, iptnum, irnth, irnr, irnf, idir, ndsmth, ifcnt, itpadd, iprojd, ifdir, igsmp_typ, ishx, ishy);
        ifrst = 1;
     }
     else{
-       sscanf(line, "%d %ld %d %d %d %d %d %d %d %d %d %d", &irtrn2, &iptnum2, &irnth2, &irnr2, &irnf2, &idir2, &ndsmth2, &ifcnt2, &itpadd2, &iprojd2, &ifdir2, &igsmp_typ2);
+       sscanf(line, "%d %ld %d %d %d %d %d %d %d %d %d %d %d %d", &irtrn2, &iptnum2, &irnth2, &irnr2, &irnf2, &idir2, &ndsmth2, &ifcnt2, &itpadd2, &iprojd2, &ifdir2, &igsmp_typ2, &ishx2, &ishy2);
 
        if(*irtrn != irtrn2 || *iptnum != iptnum2 || *irnth != irnth2 ||
           *irnr != irnr2   || *irnf != irnf2 || *idir != idir2  || *ndsmth != ndsmth2 ||
           *ifcnt != ifcnt2 || *itpadd != itpadd2 || *iprojd != iprojd2 || *ifdir != ifdir2 ||
-	  *igsmp_typ != igsmp_typ2){
+	  *igsmp_typ != igsmp_typ2 || *ishx != ishx2 || *ishy != ishy2){
            printf("****ERROR****, incompatability between radial field files.\n\n");
            exit(1);
        }

@@ -49,8 +49,9 @@ void std_read_header(GRID *gr, int *frnum, FILE *fdatin, int *tl, int *gof)
 
     float *xgtmp=NULL;
 
-    fscanf(fdatin, "%d %d %d", &std_x, &std_y, frnum); /* read grid dimensions 
-                                                     and no. of frames */
+/* read grid dimensions  and no. of frames */
+
+    fscanf(fdatin, "%d %d %d", &std_x, &std_y, frnum); 
 
     gr->ix = std_x;
     gr->iy = std_y;

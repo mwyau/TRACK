@@ -29,6 +29,7 @@ long int julian(long int );
 
 extern int nfld, nff;
 extern int *nfwpos;
+extern int aniso;
 
 void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp, char **metad, int nmeta)
 {
@@ -41,13 +42,17 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
     int varid[1]={0};
     int irmax=0;
     int trdef[3]={0, 0, 0};
-    int trid[9]={0, 0, 0, 0};
+    int trid[9]={0, 0, 0, 0, 0, 0, 0, 0, 0};
+    int anid[4]={0, 0, 0, 0};
     int itim_typ=0;
     int recpos=0;
     int ifldc=0;
     int ichnm=0;
     int tstep=0;
     int maxtim=0, ttim=0;
+    int iarray=0;
+    int ncatt=0;
+    int itunit=-1;
 
     size_t strt[1]={0}, stct[1]={0};
 
@@ -67,6 +72,8 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
     char **add_var_nm=NULL;
     char varnm[MAXCHR];
     char vartag[MAXCHR];
+    char *sfnd=NULL;
+    char *stff=NULL, *stf1=NULL, *stf2=NULL;
 
     float *fdump[5]={NULL, NULL, NULL, NULL, NULL};
     float *dlat=NULL, *dlng=NULL;
@@ -123,7 +130,8 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
     
     for(i=0; i < trnum; i++) {
         atr = trr + i;
-        *(itrid + i) = i;
+/*        *(itrid + i) = i; */
+        *(itrid + i) = atr->trid;
         if(atr->num > irmax) irmax = atr->num;
         *(itrstart + i) = itotrec;
         *(itrnum + i) = atr->num;
@@ -138,8 +146,16 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
     mem_er((itrindx == NULL) ? 0 : 1, itotrec*sizeof(int));
 
     if(itrtyp == 's'){
-      fdump[0] = (float *)calloc(irmax, sizeof(float));
-      mem_er((fdump[0] == NULL) ? 0 : 1, itotrec*sizeof(float));
+      if(aniso == 'n'){
+         fdump[0] = (float *)calloc(irmax, sizeof(float));
+         mem_er((fdump[0] == NULL) ? 0 : 1, itotrec*sizeof(float));
+      }
+      else{
+         for(i=0; i < 5; i++){
+            fdump[i] = (float *)calloc(irmax, sizeof(float));
+            mem_er((fdump[i] == NULL) ? 0 : 1, itotrec*sizeof(float));
+         }
+      }
     }
     else if(itrtyp == 'v'){
       for(i=0; i < 5; i++){
@@ -160,7 +176,7 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
        
        if(!itim_typ){    
           ttimes = (long int *)calloc(maxtim, sizeof(long int));
-          mem_er((ttimes == NULL) ? 0 : 1, maxtim*sizeof(double));     
+          mem_er((ttimes == NULL) ? 0 : 1, maxtim*sizeof(long int));     
        }
            
     }    
@@ -247,7 +263,41 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
 	  }
                 
        }
-       
+
+       for(i=0; i < nmeta; i++){
+          if((sfnd=strstr(metad[i], "TIME")) != NULL){
+             iarray = i + 2;
+             sscanf(metad[i + 1], "%d", &ncatt);
+             break;
+          }
+       }
+
+
+       if(!sfnd){
+          printf("*****WARNING****, no attributes for variable %s.\n", "TIME");
+          exit(1);
+       }
+
+       for(i=0; i < ncatt; i++){
+          if((stff=strstr(metad[iarray + i], "units")) != NULL){
+            if((stf1=strstr(stff, "hours")) != NULL){
+              stf2 = strstr(stf1, "since");
+              itunit=0;
+            }
+            else if((stf1=strstr(stff, "day")) != NULL){
+              stf2 = strstr(stf1, "as");
+              itunit=1;
+            }
+            break;
+          }
+
+       }
+
+       if(stf1 == NULL || stf2 == NULL){
+          printf("****ERROR****, time units not set.\n\n");
+          exit(1);
+       }
+
     }
     else{
        if(itim_typ){
@@ -331,6 +381,8 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
                  handle_error(ierr, __FILE__, __LINE__);
               if((ierr = nc_put_att_float(ncid, add_def[ifldc], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
                  handle_error(ierr, __FILE__, __LINE__);
+              if((ierr = nc_put_att_float(ncid, add_def[ifldc], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
+                 handle_error(ierr, __FILE__, __LINE__);
 	      if(metad) write_attribute(metad, "LONGITUDE", ncid, nmeta, add_def[ifldc], NULL, NULL);	      
               ++ifldc;
               strcpy(add_var_nm[ifldc], "latitude");
@@ -338,6 +390,8 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
               if((ierr = nc_def_var(ncid, add_var_nm[ifldc], NC_FLOAT, RANK_VAR, varid, &add_def[ifldc])) != NC_NOERR)
                  handle_error(ierr, __FILE__, __LINE__);
               if((ierr = nc_put_att_float(ncid, add_def[ifldc], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
+                 handle_error(ierr, __FILE__, __LINE__);
+              if((ierr = nc_put_att_float(ncid, add_def[ifldc], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
                  handle_error(ierr, __FILE__, __LINE__);
               if(metad) write_attribute(metad, "LATITUDE", ncid, nmeta, add_def[ifldc], NULL, NULL);
               ++ifldc;
@@ -363,6 +417,8 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
                  handle_error(ierr, __FILE__, __LINE__);
               if((ierr = nc_put_att_float(ncid, add_def[ifldc], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
                  handle_error(ierr, __FILE__, __LINE__);
+              if((ierr = nc_put_att_float(ncid, add_def[ifldc], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
+                 handle_error(ierr, __FILE__, __LINE__);
               if(metad) write_attribute(metad, vartag, ncid, nmeta, add_def[ifldc], NULL, NULL);
               ++ifldc;
 
@@ -382,6 +438,8 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
                  handle_error(ierr, __FILE__, __LINE__);
               if((ierr = nc_put_att_float(ncid, add_def[ifldc], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
                  handle_error(ierr, __FILE__, __LINE__);		 
+              if((ierr = nc_put_att_float(ncid, add_def[ifldc], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
+                 handle_error(ierr, __FILE__, __LINE__);
               if(metad) write_attribute(metad, vartag, ncid, nmeta, add_def[ifldc], NULL, NULL);
               ++ifldc;
            }
@@ -390,6 +448,41 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
        }
     }
 
+/* shape/size variables */
+
+    if(aniso == 'y'){
+      if((ierr = nc_def_var(ncid, "Anisotropy", NC_FLOAT, RANK_VAR, varid, &anid[0])) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[0], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[0], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__); 
+      if(metad) write_attribute(metad, "SHAPE_1", ncid, nmeta, anid[0], NULL, NULL);
+
+      if((ierr = nc_def_var(ncid, "X-Orientation", NC_FLOAT, RANK_VAR, varid, &anid[1])) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[1], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[1], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if(metad) write_attribute(metad, "SHAPE_2", ncid, nmeta, anid[1], NULL, NULL);
+
+      if((ierr = nc_def_var(ncid, "Y-Orientation", NC_FLOAT, RANK_VAR, varid, &anid[2])) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[2], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[2], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if(metad) write_attribute(metad, "SHAPE_3", ncid, nmeta, anid[2], NULL, NULL);
+
+      if((ierr = nc_def_var(ncid, "Area", NC_FLOAT, RANK_VAR, varid, &anid[3])) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[3], "missing_value", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if((ierr = nc_put_att_float(ncid, anid[3], "_FillValue", NC_FLOAT, 1, &missval)) != NC_NOERR)
+         handle_error(ierr, __FILE__, __LINE__);
+      if(metad) write_attribute(metad, "SHAPE_4", ncid, nmeta, anid[3], NULL, NULL);
+    }
 
 /* end define mode */
 
@@ -414,15 +507,23 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
            *(itrindx + j) = j;
 	   if(metad){
 	      if(itim_typ){ 
-/*	         ftp = (double)(fpt->time / 100);
-		 *(dtimc + j) = ftp + (((double)(fpt->time)  - ftp * 100.0) / 24.0); */
-		 *(dtimc + j) = (double)(julian(fpt->time) - jstart);	 		 
+                 if(itunit){
+                   ftp = (double)(fpt->time / 100);
+                    *(dtimc + j) = ftp + (((double)(fpt->time)  - ftp * 100.0) / 24.0); 
+                 }
+                 else {
+		    *(dtimc + j) = (double)(julian(fpt->time) - jstart); 	 		 
+                 }
 	      }
 	      else {
 	         ntim = *(ttimes + fpt->fr_id - 1);
-/*		 ftp = (double)(ntim / 100);
-		 *(dtimc + j) = ftp + (((double)(ntim)  - ftp * 100.0) / 24.0); */
-		 *(dtimc + j) = (double)(julian(ntim) - jstart);
+                 if(itunit){
+                    ftp = (double)(ntim / 100);
+                    *(dtimc + j) = ftp + (((double)(ntim)  - ftp * 100.0) / 24.0); 
+                 }
+                 else {
+                    *(dtimc + j) = (double)(julian(ntim) - jstart);
+                 }
 	      }
 	   }
 	   else{
@@ -521,6 +622,31 @@ void write_track_netcdf(struct tot_tr *trr , int trnum, char *filnm, int itrtyp,
           }
 
        }
+
+/* shape parameters */
+
+       if(aniso == 'y'){
+         for(k=0; k < atr->num; k++){
+            fpt = atr->trpt + k;
+            *(fdump[0] + k) = fpt->sh_an;
+            *(fdump[1] + k) = fpt->or_vec[0];
+            *(fdump[2] + k) = fpt->or_vec[1];
+            *(fdump[3] + k) = fpt->area;
+         }
+
+         if((ierr = nc_put_vara_float(ncid, anid[0], strt, stct, fdump[0])) != NC_NOERR)
+            handle_error(ierr, __FILE__, __LINE__);
+
+         if((ierr = nc_put_vara_float(ncid, anid[1], strt, stct, fdump[1])) != NC_NOERR)
+            handle_error(ierr, __FILE__, __LINE__);
+
+         if((ierr = nc_put_vara_float(ncid, anid[2], strt, stct, fdump[2])) != NC_NOERR)
+            handle_error(ierr, __FILE__, __LINE__);
+
+         if((ierr = nc_put_vara_float(ncid, anid[3], strt, stct, fdump[3])) != NC_NOERR)
+            handle_error(ierr, __FILE__, __LINE__);
+
+       } 
 
        recpos += atr->num;
 
@@ -664,7 +790,4 @@ void get_var_name(char **att, char *catt, int natt, char *vname)
 
 
 #endif
-
-
-
 

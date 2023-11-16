@@ -1,5 +1,6 @@
 #include <Stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include "splice.h"
 #include "m_values.h"
 
@@ -25,6 +26,11 @@ void convert_track(struct tot_tr *all_tr, int trn, int ifd, int ifdp)
       for(j=0; j < altr->num; j++){
 
           at = altr->trpt + j;
+
+	  if(at->xf > ADD_CHECK || at->yf > ADD_CHECK) {
+             printf("*****WARNING*****, missing values in file %s\n\n",  __FILE__);
+	     continue; 
+          }
 	  
 	  if(ifd){
 	    phi = *(at->add_fld + ifdp) * FP_PI;

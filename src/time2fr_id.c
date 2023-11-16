@@ -6,7 +6,7 @@
 #include "mem_er.h"
 #include "file_handle.h"
 
-#define  MAXCHR   100
+/* #define  MAXCHR   100 */
 
 /* function to convert time information to frame ID's */
 

@@ -54,7 +54,7 @@ int main(int argc, char **argv)
    double sum=0.0;
    double str1=0.0, str2=0.0;
 
-    char infil[MAXCHR], outfil[MAXCHR];
+   char infil[MAXCHR], outfil[MAXCHR];
 
    FILE *fin=NULL, *fout=NULL;
 
@@ -163,6 +163,7 @@ int main(int argc, char **argv)
        for(j=0; j < num; j++) {
           fp1 = tr1->trpt + it1s + j;
           fp2 = tr2->trpt + it2s + j; 
+	  if(fp1->xf > ADD_CHECK || fp2->xf > ADD_CHECK) continue;
 
           dd = fp1->pp[0] * fp2->pp[0] + fp1->pp[1] * fp2->pp[1] + fp1->pp[2] * fp2->pp[2];
           if(fabs(dd) > 1.) dd = (dd < 0.) ? -1.0 : 1.0;
@@ -180,6 +181,7 @@ int main(int argc, char **argv)
 
            fp1 = tr1->trpt + it1s + j;
            fp2 = tr2->trpt + it2s + j;
+           if(fp1->xf > ADD_CHECK || fp2->xf > ADD_CHECK) continue;
  
            dd = ortho_dist(fp2, tr1->trpt, tr1->num, &ist, ifnd, 0, &visec);
 
@@ -255,6 +257,7 @@ int main(int argc, char **argv)
        for(j=0; j < num - 1; j++) {
           fp1 = tr1->trpt + it1s + j;
           fp2 = tr1->trpt + it1s + j + 1; 
+          if(fp1->xf > ADD_CHECK || fp2->xf > ADD_CHECK) continue;
 
           dd = fp1->pp[0] * fp2->pp[0] + fp1->pp[1] * fp2->pp[1] + fp1->pp[2] * fp2->pp[2];
           if(fabs(dd) > 1.) dd = (dd < 0.) ? -1.0 : 1.0;
@@ -262,6 +265,7 @@ int main(int argc, char **argv)
 
           fp1 = tr2->trpt + it2s + j;
           fp2 = tr2->trpt + it2s + j + 1; 
+	  if(fp1->xf > ADD_CHECK || fp2->xf > ADD_CHECK) continue;
 
           dd = fp1->pp[0] * fp2->pp[0] + fp1->pp[1] * fp2->pp[1] + fp1->pp[2] * fp2->pp[2];
           if(fabs(dd) > 1.) dd = (dd < 0.) ? -1.0 : 1.0;

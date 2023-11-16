@@ -1,10 +1,11 @@
 SOURCES=multi_ident.c \
        meantrd.c \
+       orog_test.c \
        read_tracks.c 
 
 OBJECTS = $(SOURCES:.c=.o)
 
-OBJECT=multi_ident.o meantrd.o read_tracks.o 
+OBJECT=multi_ident.o meantrd.o orog_test.o read_tracks.o 
 
 #CFLAGS = -g -Xa -xsb
 

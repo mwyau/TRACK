@@ -7,7 +7,7 @@ set FILES='meantrd.c read_tracks.c statdmp.c malloc_initl.c read_stats.c realloc
 
 echo $FILES
 
-set LIST='COMBINE CONVOLVE COUNT DIFFSTAT ENSEMBLE HART IBT-REF LANDFALL LIFECYCLE LOCATION MISC MULTI-IDENT SAMPLE SPLIT TELE_WEIGHTS TC TILT TRANSADD TRTRANS TR2KML TR2NC TR2PGSL SIEGEL'
+set LIST='COMBINE CONVOLVE COUNT DIFFSTAT ENSEMBLE HART HELICITY IBT-REF LANDFALL LIFECYCLE LOCATION MISC MULTI-IDENT SAMPLE SPLIT TELE_WEIGHTS TC TILT TRANSADD TRTRANS TR2KML TR2NC TR2PGSL SIEGEL TRACKADD'
 
 echo $LIST
 
@@ -58,6 +58,11 @@ ln -s ../COMMON/convert_track.c ENSEMBLE/convert_track.c
 ln -s ../COMMON/read_tracks.c HART/read_tracks.c
 ln -s ../COMMON/meantrd.c HART/meantrd.c
 ln -s ../COMMON/realloc_n.c HART/realloc_n.c
+
+# HELICITY
+
+ln -s ../COMMON/read_tracks.c HELICITY/read_tracks.c
+ln -s ../COMMON/convert_track.c HELICITY/convert_track.c
 
 # SAMPLE
 
@@ -162,3 +167,8 @@ ln -s ../COMMON/realloc_n.c IBT-REF/realloc_n.c
 ln -s ../COMMON/read_tracks.c TR2NC/read_tracks.c
 ln -s ../COMMON/new_time.c TR2NC/new_time.c
 
+#TRACKADD
+
+ln -s ../COMMON/read_tracks.c TRACKADD/read_tracks.c
+ln -s ../COMMON/meantrd.c TRACKADD/meantrd.c
+ln -s ../COMMON/realloc_n.c TRACKADD/realloc_n.c

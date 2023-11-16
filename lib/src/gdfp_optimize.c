@@ -28,7 +28,7 @@
 #define   SMALL     1.0e-20
 #define   MAXLAM    1.0e+8
 #define   MAXITER   20
-
+#define   NLOOP     500
 
 int correct_vect(double * , double * , double * , double * , double * , int * , int * , int );
 double func(double * , double * , int , int , int );
@@ -52,6 +52,7 @@ double gdfp_optimize(double *mvec, double fm, int dimv, int type, int iopt, int 
     int cf, ic=0;
     int iter, cg, ld;
     int icor=0, rpt;
+    int nlp=0;
 
     double val0, hm;
     double dvec[dimv], h[dimv], hh[kk], p[kk], mv[dimv];
@@ -436,6 +437,7 @@ loop_start:
     else{
 
       gam = gam1;
+      nlp = 0;
 
       while(gam > TOLINT){
 
@@ -455,6 +457,11 @@ loop_start:
         for(i=0; i<dimv; i++) mv[i] = mvc[i] + gam *h[i];
 
         if(gam < TOLINT) break;
+
+        if(nlp > NLOOP) {
+           printf("****WARNING****, too many iterations for maximum along a line during local optimization.\n\n");
+           break;
+        }
 
         f = func(mv, dvec, dimv, type, 1);
  
@@ -490,6 +497,8 @@ loop_start:
 
 
         }
+
+        ++nlp;
 
       }
 

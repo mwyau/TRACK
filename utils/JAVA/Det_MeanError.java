@@ -80,7 +80,7 @@ public class Det_MeanError{
                 FilenameFilter fmatchtyp = new FilenameFilter() {
                    public boolean accept(File d, String name) {
                       boolean ret;
-                      if(name != null && (name.startsWith("trmatch") )) {
+                      if(name != null && (name.startsWith("trmatch") && ! name.endsWith(".nc"))) {
                         ret = true;
                       }
                       else ret = false;

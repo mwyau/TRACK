@@ -2620,7 +2620,7 @@ double dirangle(struct tot_tr *altr, double *cn, double *sn, int pt_id, int ndsm
    }
 
    if(ndsmth % 2) {st = pt_id - n2; en = pt_id + n2;}
-   else {st = pt_id - n2 - 1; en = pt_id + n2;}
+   else {st = pt_id - n2; en = pt_id + n2 - 1;}
 
    if(st < 0) st = 0;
    if(en > altr->num - 2) en = altr->num - 2;

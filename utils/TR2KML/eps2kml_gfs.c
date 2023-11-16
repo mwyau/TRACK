@@ -34,9 +34,9 @@ void write_kml_track(FILE * , struct tot_tr * , int );
 void write_kml_cluster(FILE * , struct tot_tr * , struct tot_tr * , int , int , int );
 void process_clusters(FILE * , int * , int , int );
 
-int aniso;
-int nff, nfld;
-int *nfwpos;
+extern int aniso;
+extern int nff, nfld;
+extern int *nfwpos;
 
 int main(int argc, char **argv)
 {

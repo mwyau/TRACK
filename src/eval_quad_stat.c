@@ -69,7 +69,7 @@ double eval_quad_stat(double *plt, double **den, struct dpt *st, struct dpt *dt,
       tsm = (1.0 + *plt) / *plt;
 
       cn *= tsm;
-      cd = 1.0 - tsm;
+      cd = tsm - 1.0;
 
       con = cn / (cd * cd * (tsm + 2.0));
 
@@ -167,7 +167,7 @@ double eval_quad_stat(double *plt, double **den, struct dpt *st, struct dpt *dt,
 
                tsm = (1.0 + ts) / ts;
 
-               cd = 1.0 - tsm;
+               cd = tsm - 1.0;
 
                cnn = tsm / (cd * cd * (tsm + 2.0));
 
@@ -252,7 +252,7 @@ double variance_quad(double mean, struct dpt *spt, struct dpt *dt, double *plt, 
          tsm = (1.0 + *plt) / *plt;
 
          cn *= tsm;
-         cd = 1.0 - tsm;
+         cd = tsm - 1.0;
 
          con = cn / (cd * cd * (tsm + 2.0));
 
@@ -291,7 +291,7 @@ double variance_quad(double mean, struct dpt *spt, struct dpt *dt, double *plt, 
 
             tsm = (1.0 + ts) / ts;
 
-            cd = 1.0 - tsm;
+            cd = tsm - 1.0;
 
             cnn = tsm / (cd * cd * (tsm + 2.0));
 
